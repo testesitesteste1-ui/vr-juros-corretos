@@ -1,21 +1,18 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
-import { Calculator as CalcIcon, AlertTriangle, CheckCircle, Loader2 } from "lucide-react";
+import { Calculator as CalcIcon, AlertTriangle, CheckCircle, Loader2, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { Label } from "./ui/label";
 
 interface CalculationResult {
-  totalJuros: number;
-  totalPagar: number;
+  taxaMensal: number;
   taxaAnual: number;
-  selicComparativo: number;
-  isAbusivo: boolean;
-  percentualAcimaSelic: number;
+  totalJuros: number;
+  totalPago: number;
+  status: "verde" | "amarelo" | "vermelho";
 }
-
-const SELIC_ATUAL = 12.25; // Taxa SELIC atual em % ao ano
 
 // Animated number component
 const AnimatedNumber = ({ value, prefix = "", suffix = "" }: { value: number; prefix?: string; suffix?: string }) => {
@@ -51,10 +48,46 @@ const AnimatedNumber = ({ value, prefix = "", suffix = "" }: { value: number; pr
   );
 };
 
+// Newton-Raphson method to calculate internal rate of return (IRR)
+const calcularTaxaMensal = (valorContratado: number, numParcelas: number, valorParcela: number): number => {
+  // Initial guess
+  let taxa = 0.03;
+  const tolerancia = 0.0000001;
+  const maxIteracoes = 100;
+
+  for (let i = 0; i < maxIteracoes; i++) {
+    // Present value of annuity formula: PV = PMT * ((1 - (1 + r)^-n) / r)
+    // We want: valorContratado = valorParcela * ((1 - (1 + taxa)^-numParcelas) / taxa)
+    const potencia = Math.pow(1 + taxa, -numParcelas);
+    const pv = valorParcela * ((1 - potencia) / taxa);
+    const diferenca = pv - valorContratado;
+
+    if (Math.abs(diferenca) < tolerancia) {
+      return taxa;
+    }
+
+    // Derivative of PV with respect to taxa
+    const derivada = valorParcela * (
+      (numParcelas * potencia * (1 + taxa)) / (taxa * (1 + taxa)) -
+      (1 - potencia) / (taxa * taxa)
+    );
+
+    if (derivada === 0) break;
+
+    taxa = taxa - diferenca / derivada;
+
+    // Ensure taxa stays positive
+    if (taxa <= 0) taxa = 0.001;
+    if (taxa > 1) taxa = 0.5; // Cap at 50% monthly
+  }
+
+  return taxa;
+};
+
 const InterestCalculator = () => {
-  const [valorEmprestimo, setValorEmprestimo] = useState("");
-  const [prazoMeses, setPrazoMeses] = useState("");
-  const [taxaMensal, setTaxaMensal] = useState("");
+  const [valorContratado, setValorContratado] = useState("");
+  const [numParcelas, setNumParcelas] = useState("");
+  const [valorParcela, setValorParcela] = useState("");
   const [isCalculating, setIsCalculating] = useState(false);
   const [result, setResult] = useState<CalculationResult | null>(null);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
@@ -74,23 +107,40 @@ const InterestCalculator = () => {
     return parseFloat(numbers) / 100 || 0;
   };
 
-  const handleValorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleValorContratadoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatCurrency(e.target.value);
-    setValorEmprestimo(formatted);
-    if (errors.valor) setErrors({ ...errors, valor: "" });
+    setValorContratado(formatted);
+    if (errors.valorContratado) setErrors({ ...errors, valorContratado: "" });
+  };
+
+  const handleValorParcelaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatCurrency(e.target.value);
+    setValorParcela(formatted);
+    if (errors.valorParcela) setErrors({ ...errors, valorParcela: "" });
   };
 
   const validate = (): boolean => {
     const newErrors: { [key: string]: string } = {};
 
-    if (!valorEmprestimo || parseCurrency(valorEmprestimo) <= 0) {
-      newErrors.valor = "Informe um valor válido";
+    const valor = parseCurrency(valorContratado);
+    const parcelas = parseInt(numParcelas);
+    const parcela = parseCurrency(valorParcela);
+
+    if (!valorContratado || valor <= 0) {
+      newErrors.valorContratado = "Informe um valor válido";
     }
-    if (!prazoMeses || parseInt(prazoMeses) <= 0) {
-      newErrors.prazo = "Informe um prazo válido";
+    if (!numParcelas || parcelas <= 0) {
+      newErrors.numParcelas = "Informe a quantidade de parcelas";
     }
-    if (!taxaMensal || parseFloat(taxaMensal.replace(",", ".")) <= 0) {
-      newErrors.taxa = "Informe uma taxa válida";
+    if (!valorParcela || parcela <= 0) {
+      newErrors.valorParcela = "Informe o valor da parcela";
+    }
+
+    // Validate that total payments exceed principal (otherwise negative interest)
+    if (valor > 0 && parcelas > 0 && parcela > 0) {
+      if (parcela * parcelas <= valor) {
+        newErrors.valorParcela = "Valor total das parcelas deve ser maior que o valor contratado";
+      }
     }
 
     setErrors(newErrors);
@@ -106,49 +156,76 @@ const InterestCalculator = () => {
     // Simulate calculation delay for animation
     await new Promise((resolve) => setTimeout(resolve, 800));
 
-    const valor = parseCurrency(valorEmprestimo);
-    const prazo = parseInt(prazoMeses);
-    const taxa = parseFloat(taxaMensal.replace(",", ".")) / 100;
+    const valor = parseCurrency(valorContratado);
+    const parcelas = parseInt(numParcelas);
+    const parcela = parseCurrency(valorParcela);
 
-    // Cálculo de juros compostos
-    const montante = valor * Math.pow(1 + taxa, prazo);
-    const totalJuros = montante - valor;
-    const taxaAnual = (Math.pow(1 + taxa, 12) - 1) * 100;
+    const taxaMensal = calcularTaxaMensal(valor, parcelas, parcela) * 100;
+    const taxaAnual = (Math.pow(1 + taxaMensal / 100, 12) - 1) * 100;
+    const totalPago = parcela * parcelas;
+    const totalJuros = totalPago - valor;
 
-    // Comparação com SELIC
-    const selicMensal = Math.pow(1 + SELIC_ATUAL / 100, 1 / 12) - 1;
-    const montanteSelic = valor * Math.pow(1 + selicMensal, prazo);
-    const selicComparativo = montanteSelic - valor;
-
-    // Considera abusivo se a taxa anual for maior que 3x a SELIC
-    const isAbusivo = taxaAnual > SELIC_ATUAL * 3;
-    const percentualAcimaSelic = ((taxaAnual - SELIC_ATUAL) / SELIC_ATUAL) * 100;
+    // Determine status based on monthly rate
+    let status: "verde" | "amarelo" | "vermelho";
+    if (taxaMensal <= 3) {
+      status = "verde";
+    } else if (taxaMensal <= 6) {
+      status = "amarelo";
+    } else {
+      status = "vermelho";
+    }
 
     setResult({
-      totalJuros,
-      totalPagar: montante,
+      taxaMensal,
       taxaAnual,
-      selicComparativo,
-      isAbusivo,
-      percentualAcimaSelic,
+      totalJuros,
+      totalPago,
+      status,
     });
 
     setIsCalculating(false);
   };
 
   const limpar = () => {
-    setValorEmprestimo("");
-    setPrazoMeses("");
-    setTaxaMensal("");
+    setValorContratado("");
+    setNumParcelas("");
+    setValorParcela("");
     setResult(null);
     setErrors({});
   };
 
+  const getStatusConfig = (status: "verde" | "amarelo" | "vermelho") => {
+    switch (status) {
+      case "verde":
+        return {
+          icon: CheckCircle,
+          label: "TAXA DENTRO DO ESPERADO",
+          description: "Sua taxa está abaixo de 3% ao mês, o que é considerado razoável para a maioria dos empréstimos.",
+          bgClass: "bg-success/10 border-success/30",
+          textClass: "text-success",
+        };
+      case "amarelo":
+        return {
+          icon: AlertCircle,
+          label: "ATENÇÃO COM SUA TAXA",
+          description: "Sua taxa está entre 3% e 6% ao mês. Vale pesquisar outras opções no mercado.",
+          bgClass: "bg-warning/10 border-warning/30",
+          textClass: "text-warning",
+        };
+      case "vermelho":
+        return {
+          icon: AlertTriangle,
+          label: "TAXA MUITO ALTA!",
+          description: "Sua taxa está acima de 6% ao mês. Isso pode indicar juros muito elevados para o mercado atual.",
+          bgClass: "bg-destructive/10 border-destructive/30",
+          textClass: "text-destructive",
+        };
+    }
+  };
+
   return (
-    <section id="calculadora" className="py-20 md:py-32 bg-navy-deep relative overflow-hidden">
+    <section id="calculadora" className="py-20 md:py-32 bg-muted/30 relative overflow-hidden">
       {/* Background decoration */}
-      <div className="absolute inset-0 bg-hero-pattern opacity-50" />
-      
       <motion.div
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-primary/5 blur-3xl"
         animate={{
@@ -173,13 +250,13 @@ const InterestCalculator = () => {
         >
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-6">
             <CalcIcon className="w-4 h-4 text-primary" />
-            <span className="text-sm font-medium text-primary">Gratuito e sem compromisso</span>
+            <span className="text-sm font-medium text-primary">100% Gratuito</span>
           </div>
-          <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
-            Calculadora de <span className="text-gold-gradient">Juros</span>
+          <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-foreground">
+            Descubra sua <span className="text-gold-gradient">Taxa de Juros</span>
           </h2>
           <p className="font-body text-muted-foreground text-lg max-w-2xl mx-auto">
-            Descubra em segundos se você está pagando juros abusivos no seu empréstimo ou financiamento
+            Informe os dados do seu empréstimo e descubra qual é a taxa de juros que você está pagando
           </p>
         </motion.div>
 
@@ -193,79 +270,76 @@ const InterestCalculator = () => {
         >
           <Card variant="premium" className="overflow-hidden">
             <CardHeader className="pb-4">
-              <CardTitle className="text-2xl">Simule seus Juros</CardTitle>
+              <CardTitle className="text-2xl text-foreground">Calculadora de Taxa</CardTitle>
               <CardDescription>
-                Preencha os dados do seu contrato para calcular
+                Preencha com os dados do seu contrato
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Form Fields */}
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="valor" className="text-sm font-medium">
-                    Valor do Empréstimo (R$)
+                  <Label htmlFor="valorContratado" className="text-sm font-medium">
+                    Valor que você pegou emprestado (R$)
                   </Label>
                   <div className="relative">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground">
                       R$
                     </span>
                     <Input
-                      id="valor"
+                      id="valorContratado"
                       type="text"
-                      placeholder="0,00"
-                      value={valorEmprestimo}
-                      onChange={handleValorChange}
-                      className={`pl-10 ${errors.valor ? "border-destructive" : ""}`}
+                      placeholder="Ex: 10.000,00"
+                      value={valorContratado}
+                      onChange={handleValorContratadoChange}
+                      className={`pl-10 ${errors.valorContratado ? "border-destructive" : ""}`}
                     />
                   </div>
-                  {errors.valor && (
-                    <p className="text-xs text-destructive">{errors.valor}</p>
+                  {errors.valorContratado && (
+                    <p className="text-xs text-destructive">{errors.valorContratado}</p>
                   )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="prazo" className="text-sm font-medium">
-                      Prazo (meses)
+                    <Label htmlFor="numParcelas" className="text-sm font-medium">
+                      Quantas parcelas?
                     </Label>
                     <Input
-                      id="prazo"
+                      id="numParcelas"
                       type="number"
-                      placeholder="12"
-                      value={prazoMeses}
+                      placeholder="Ex: 24"
+                      value={numParcelas}
                       onChange={(e) => {
-                        setPrazoMeses(e.target.value);
-                        if (errors.prazo) setErrors({ ...errors, prazo: "" });
+                        setNumParcelas(e.target.value);
+                        if (errors.numParcelas) setErrors({ ...errors, numParcelas: "" });
                       }}
-                      className={errors.prazo ? "border-destructive" : ""}
+                      className={errors.numParcelas ? "border-destructive" : ""}
                     />
-                    {errors.prazo && (
-                      <p className="text-xs text-destructive">{errors.prazo}</p>
+                    {errors.numParcelas && (
+                      <p className="text-xs text-destructive">{errors.numParcelas}</p>
                     )}
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="taxa" className="text-sm font-medium">
-                      Taxa de Juros (% a.m.)
+                    <Label htmlFor="valorParcela" className="text-sm font-medium">
+                      Valor de cada parcela
                     </Label>
                     <div className="relative">
-                      <Input
-                        id="taxa"
-                        type="text"
-                        placeholder="2,5"
-                        value={taxaMensal}
-                        onChange={(e) => {
-                          setTaxaMensal(e.target.value);
-                          if (errors.taxa) setErrors({ ...errors, taxa: "" });
-                        }}
-                        className={`pr-10 ${errors.taxa ? "border-destructive" : ""}`}
-                      />
-                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground">
-                        %
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground">
+                        R$
                       </span>
+                      <Input
+                        id="valorParcela"
+                        type="text"
+                        placeholder="Ex: 500,00"
+                        value={valorParcela}
+                        onChange={handleValorParcelaChange}
+                        className={`pl-10 ${errors.valorParcela ? "border-destructive" : ""}`}
+                      />
                     </div>
-                    {errors.taxa && (
-                      <p className="text-xs text-destructive">{errors.taxa}</p>
+                    {errors.valorParcela && (
+                      <p className="text-xs text-destructive">{errors.valorParcela}</p>
                     )}
                   </div>
                 </div>
@@ -288,7 +362,7 @@ const InterestCalculator = () => {
                   ) : (
                     <>
                       <CalcIcon className="w-4 h-4 mr-2" />
-                      Calcular
+                      Descobrir Taxa
                     </>
                   )}
                 </Button>
@@ -320,21 +394,36 @@ const InterestCalculator = () => {
                         transition={{ delay: 0.3 }}
                         className="text-center"
                       >
-                        {result.isAbusivo ? (
-                          <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-destructive/10 border border-destructive/30">
-                            <AlertTriangle className="w-5 h-5 text-destructive" />
-                            <span className="font-semibold text-destructive">
-                              JUROS POTENCIALMENTE ABUSIVOS
-                            </span>
-                          </div>
-                        ) : (
-                          <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-success/10 border border-success/30">
-                            <CheckCircle className="w-5 h-5 text-success" />
-                            <span className="font-semibold text-success">
-                              TAXA DENTRO DO ACEITÁVEL
-                            </span>
-                          </div>
-                        )}
+                        {(() => {
+                          const config = getStatusConfig(result.status);
+                          const Icon = config.icon;
+                          return (
+                            <div className={`inline-flex items-center gap-2 px-6 py-3 rounded-full border ${config.bgClass}`}>
+                              <Icon className={`w-5 h-5 ${config.textClass}`} />
+                              <span className={`font-semibold ${config.textClass}`}>
+                                {config.label}
+                              </span>
+                            </div>
+                          );
+                        })()}
+                      </motion.div>
+
+                      {/* Main Result - Monthly Rate */}
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.4 }}
+                        className={`p-6 rounded-xl text-center border ${getStatusConfig(result.status).bgClass}`}
+                      >
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Sua Taxa de Juros Mensal
+                        </p>
+                        <p className={`text-5xl font-bold font-display ${getStatusConfig(result.status).textClass}`}>
+                          <AnimatedNumber value={result.taxaMensal} suffix="%" />
+                        </p>
+                        <p className="text-sm text-muted-foreground mt-2">
+                          ao mês
+                        </p>
                       </motion.div>
 
                       {/* Results Grid */}
@@ -342,29 +431,16 @@ const InterestCalculator = () => {
                         <motion.div
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.4 }}
-                          className="p-4 rounded-lg bg-muted/50"
-                        >
-                          <p className="text-sm text-muted-foreground mb-1">
-                            Total de Juros
-                          </p>
-                          <p className="text-2xl font-bold text-foreground">
-                            <AnimatedNumber value={result.totalJuros} prefix="R$ " />
-                          </p>
-                        </motion.div>
-
-                        <motion.div
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: 0.5 }}
                           className="p-4 rounded-lg bg-muted/50"
                         >
                           <p className="text-sm text-muted-foreground mb-1">
-                            Total a Pagar
+                            Taxa Anual
                           </p>
                           <p className="text-2xl font-bold text-foreground">
-                            <AnimatedNumber value={result.totalPagar} prefix="R$ " />
+                            <AnimatedNumber value={result.taxaAnual} suffix="%" />
                           </p>
+                          <p className="text-xs text-muted-foreground">ao ano</p>
                         </motion.div>
 
                         <motion.div
@@ -374,66 +450,35 @@ const InterestCalculator = () => {
                           className="p-4 rounded-lg bg-muted/50"
                         >
                           <p className="text-sm text-muted-foreground mb-1">
-                            Taxa Anual (a.a.)
+                            Total de Juros
                           </p>
                           <p className="text-2xl font-bold text-foreground">
-                            <AnimatedNumber value={result.taxaAnual} suffix="%" />
-                          </p>
-                        </motion.div>
-
-                        <motion.div
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.7 }}
-                          className="p-4 rounded-lg bg-muted/50"
-                        >
-                          <p className="text-sm text-muted-foreground mb-1">
-                            Acima da SELIC ({SELIC_ATUAL}%)
-                          </p>
-                          <p className={`text-2xl font-bold ${result.isAbusivo ? "text-destructive" : "text-foreground"}`}>
-                            <AnimatedNumber value={result.percentualAcimaSelic} suffix="%" />
+                            <AnimatedNumber value={result.totalJuros} prefix="R$ " />
                           </p>
                         </motion.div>
                       </div>
 
-                      {/* Comparison */}
+                      {/* Explanation */}
                       <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.8 }}
-                        className="p-4 rounded-lg bg-primary/5 border border-primary/20"
+                        transition={{ delay: 0.7 }}
+                        className="p-4 rounded-lg bg-accent/5 border border-accent/20"
                       >
-                        <p className="text-sm text-muted-foreground mb-2">
-                          Comparativo: Se fosse pela SELIC, você pagaria apenas
-                        </p>
-                        <p className="text-xl font-bold text-primary">
-                          R$ {result.selicComparativo.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} em juros
-                        </p>
-                        <p className="text-sm text-muted-foreground mt-2">
-                          Diferença de{" "}
-                          <span className="font-semibold text-foreground">
-                            R$ {(result.totalJuros - result.selicComparativo).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                          </span>
+                        <p className="text-sm text-muted-foreground">
+                          {getStatusConfig(result.status).description}
                         </p>
                       </motion.div>
 
-                      {/* CTA */}
-                      {result.isAbusivo && (
-                        <motion.div
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.9 }}
-                        >
-                          <Button
-                            variant="hero"
-                            size="lg"
-                            className="w-full"
-                            onClick={() => document.querySelector("#consultoria")?.scrollIntoView({ behavior: "smooth" })}
-                          >
-                            Quero uma Análise Profissional
-                          </Button>
-                        </motion.div>
-                      )}
+                      {/* Info tip */}
+                      <motion.p
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.8 }}
+                        className="text-xs text-center text-muted-foreground"
+                      >
+                        💡 Dica: Compare sempre com outras instituições antes de contratar um empréstimo!
+                      </motion.p>
                     </div>
                   </motion.div>
                 )}

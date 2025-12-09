@@ -1,25 +1,25 @@
 import { motion } from "framer-motion";
-import { Calculator, Search, MessageCircle } from "lucide-react";
+import { Calculator, Eye, Lightbulb } from "lucide-react";
 import { Card, CardContent } from "./ui/card";
 
 const steps = [
   {
     icon: Calculator,
-    title: "Calcule Gratuitamente",
+    title: "Informe os Dados",
     description:
-      "Use nossa calculadora para simular os juros do seu empréstimo ou financiamento de forma rápida e sem custo.",
+      "Digite quanto você pegou emprestado, o número de parcelas e quanto paga por mês. Simples assim!",
   },
   {
-    icon: Search,
-    title: "Identifique Abusos",
+    icon: Eye,
+    title: "Descubra sua Taxa",
     description:
-      "Nosso sistema compara sua taxa com a média do mercado e a SELIC, identificando possíveis cobranças abusivas.",
+      "Nossa calculadora mostra qual é a taxa de juros real do seu empréstimo ou financiamento.",
   },
   {
-    icon: MessageCircle,
-    title: "Orientação Especializada",
+    icon: Lightbulb,
+    title: "Tome Decisões Melhores",
     description:
-      "Receba consultoria jurídica personalizada para entender seus direitos e as melhores ações a tomar.",
+      "Com essa informação, você pode comparar com outras opções e fazer escolhas mais inteligentes.",
   },
 ];
 
@@ -47,7 +47,7 @@ const itemVariants = {
 
 const HowItWorks = () => {
   return (
-    <section id="como-funciona" className="py-20 md:py-32 bg-background">
+    <section id="como-funciona" className="py-20 md:py-32 bg-card">
       <div className="container px-4 md:px-6">
         {/* Section Header */}
         <motion.div
@@ -57,11 +57,11 @@ const HowItWorks = () => {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
+          <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-foreground">
             Como <span className="text-gold-gradient">Funciona</span>
           </h2>
           <p className="font-body text-muted-foreground text-lg max-w-2xl mx-auto">
-            Três passos simples para você descobrir se está pagando juros abusivos
+            Três passos simples para você entender os juros do seu empréstimo
           </p>
         </motion.div>
 
@@ -92,7 +92,7 @@ const HowItWorks = () => {
                   </div>
 
                   {/* Content */}
-                  <h3 className="font-display text-xl font-semibold mb-3 group-hover:text-primary transition-colors">
+                  <h3 className="font-display text-xl font-semibold mb-3 text-foreground group-hover:text-primary transition-colors">
                     {step.title}
                   </h3>
                   <p className="font-body text-muted-foreground text-sm leading-relaxed">

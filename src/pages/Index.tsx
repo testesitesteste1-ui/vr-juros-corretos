@@ -1,8 +1,9 @@
 import Header from "@/components/Header";
+import TipsCarousel from "@/components/TipsCarousel";
 import Hero from "@/components/Hero";
 import HowItWorks from "@/components/HowItWorks";
 import InterestCalculator from "@/components/InterestCalculator";
-import Consultation from "@/components/Consultation";
+import Tips from "@/components/Tips";
 import About from "@/components/About";
 import Footer from "@/components/Footer";
 
@@ -10,11 +11,12 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main>
+      <main className="pt-16 md:pt-20">
+        <TipsCarousel />
         <Hero />
         <HowItWorks />
         <InterestCalculator />
-        <Consultation />
+        <Tips />
         <About />
       </main>
       <Footer />

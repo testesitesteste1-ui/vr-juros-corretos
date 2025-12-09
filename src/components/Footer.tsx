@@ -1,6 +1,4 @@
-import { motion } from "framer-motion";
-import { Mail, Phone, MapPin, Instagram, Linkedin } from "lucide-react";
-import Logo from "./Logo";
+import { Calculator, Instagram, Mail } from "lucide-react";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -9,8 +7,8 @@ const Footer = () => {
     quick: [
       { label: "Como Funciona", href: "#como-funciona" },
       { label: "Calculadora", href: "#calculadora" },
-      { label: "Consultoria", href: "#consultoria" },
-      { label: "Sobre Nós", href: "#sobre" },
+      { label: "Dicas", href: "#dicas" },
+      { label: "Sobre", href: "#sobre" },
     ],
     legal: [
       { label: "Política de Privacidade", href: "#" },
@@ -33,10 +31,18 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
           {/* Brand */}
           <div className="lg:col-span-1">
-            <Logo />
-            <p className="mt-4 text-sm text-muted-foreground leading-relaxed">
-              Advocacia especializada em direito bancário e defesa do consumidor
-              contra juros abusivos.
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-gold-gradient flex items-center justify-center shadow-gold">
+                <Calculator className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <span className="font-display text-xl font-bold text-foreground">Verifica</span>
+                <span className="font-display text-xl font-bold text-gold-gradient">Juros</span>
+              </div>
+            </div>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Ferramenta gratuita de educação financeira para ajudar você a 
+              entender os juros do seu empréstimo.
             </p>
             {/* Social Links */}
             <div className="flex gap-3 mt-6">
@@ -48,11 +54,11 @@ const Footer = () => {
                 <Instagram className="w-4 h-4" />
               </a>
               <a
-                href="#"
+                href="mailto:contato@verificajuros.com.br"
                 className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
-                aria-label="LinkedIn"
+                aria-label="Email"
               >
-                <Linkedin className="w-4 h-4" />
+                <Mail className="w-4 h-4" />
               </a>
             </div>
           </div>
@@ -104,19 +110,7 @@ const Footer = () => {
               <li className="flex items-start gap-3">
                 <Mail className="w-4 h-4 text-primary mt-0.5" />
                 <span className="text-sm text-muted-foreground">
-                  contato@vrjuros.com.br
-                </span>
-              </li>
-              <li className="flex items-start gap-3">
-                <Phone className="w-4 h-4 text-primary mt-0.5" />
-                <span className="text-sm text-muted-foreground">
-                  (11) 99999-9999
-                </span>
-              </li>
-              <li className="flex items-start gap-3">
-                <MapPin className="w-4 h-4 text-primary mt-0.5" />
-                <span className="text-sm text-muted-foreground">
-                  São Paulo, SP - Brasil
+                  contato@verificajuros.com.br
                 </span>
               </li>
             </ul>
@@ -127,12 +121,11 @@ const Footer = () => {
         <div className="mt-12 pt-8 border-t border-border">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-xs text-muted-foreground text-center md:text-left">
-              © {currentYear} VR Juros Advocacia. Todos os direitos reservados.
+              © {currentYear} VerificaJuros. Todos os direitos reservados.
             </p>
             <p className="text-xs text-muted-foreground text-center md:text-right max-w-md">
-              Este site não oferece aconselhamento jurídico específico. A
-              calculadora é uma ferramenta informativa. Consulte um advogado para
-              análise personalizada do seu caso.
+              Esta é uma ferramenta educativa. Os cálculos são aproximados e servem 
+              apenas para fins informativos.
             </p>
           </div>
         </div>

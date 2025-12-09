@@ -1,36 +1,33 @@
 import { motion } from "framer-motion";
-import { Scale, BookOpen, Users, Award } from "lucide-react";
+import { BookOpen, Users, Heart, Sparkles } from "lucide-react";
 import { Card, CardContent } from "./ui/card";
 
 const features = [
   {
-    icon: Scale,
-    title: "Direito Bancário",
-    description: "Especialização em contratos e operações bancárias",
-  },
-  {
     icon: BookOpen,
-    title: "Código de Defesa",
-    description: "Aplicação integral do CDC em favor do consumidor",
+    title: "Educação Financeira",
+    description: "Informação clara e acessível para todos entenderem seus direitos",
   },
   {
     icon: Users,
-    title: "Atendimento Humano",
-    description: "Acompanhamento personalizado do seu caso",
+    title: "Para Todos",
+    description: "Aposentados, pensionistas e qualquer pessoa com empréstimo",
   },
   {
-    icon: Award,
-    title: "Experiência Comprovada",
-    description: "Anos de atuação em revisão de contratos",
+    icon: Heart,
+    title: "100% Gratuito",
+    description: "Nossa calculadora é totalmente gratuita, sem pegadinhas",
+  },
+  {
+    icon: Sparkles,
+    title: "Fácil de Usar",
+    description: "Interface simples e intuitiva para qualquer pessoa",
   },
 ];
 
 const About = () => {
   return (
-    <section id="sobre" className="py-20 md:py-32 bg-navy-deep relative overflow-hidden">
-      {/* Background decoration */}
-      <div className="absolute inset-0 bg-hero-pattern opacity-50" />
-
+    <section id="sobre" className="py-20 md:py-32 bg-muted/30 relative overflow-hidden">
       <div className="container relative z-10 px-4 md:px-6">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           {/* Text Content */}
@@ -40,23 +37,23 @@ const About = () => {
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.6 }}
           >
-            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-6">
-              Seus <span className="text-gold-gradient">Direitos</span> em Primeiro Lugar
+            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-6 text-foreground">
+              Conhecimento é <span className="text-gold-gradient">Poder</span>
             </h2>
             <div className="space-y-4 font-body text-muted-foreground">
               <p>
-                O Código de Defesa do Consumidor (CDC) protege você contra cobranças
-                abusivas e práticas ilegais de instituições financeiras. Muitos
-                brasileiros pagam juros muito acima do permitido sem saber.
+                Muitas pessoas pagam juros altíssimos sem saber. Empréstimos consignados, 
+                financiamentos e cartões de crédito podem ter taxas muito diferentes 
+                entre as instituições.
               </p>
               <p>
-                Nossa missão é democratizar o acesso à justiça, oferecendo ferramentas
-                gratuitas para identificar abusos e consultoria acessível para quem
-                precisa de orientação profissional.
+                O problema é que nem sempre é fácil descobrir quanto de juros você 
+                realmente está pagando. Os contratos são confusos e as informações 
+                nem sempre são claras.
               </p>
               <p className="text-foreground font-medium">
-                Não deixe seus direitos passarem despercebidos. Juntos, podemos
-                revisar seu contrato e buscar a reparação que você merece.
+                Por isso criamos essa ferramenta gratuita: para que você possa descobrir 
+                sua taxa real de juros e tomar decisões mais inteligentes sobre seu dinheiro.
               </p>
             </div>
           </motion.div>
@@ -77,7 +74,7 @@ const About = () => {
                 viewport={{ once: true }}
                 transition={{ delay: 0.3 + index * 0.1 }}
               >
-                <Card variant="glass" className="h-full">
+                <Card variant="elevated" className="h-full">
                   <CardContent className="p-6">
                     <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
                       <feature.icon className="w-5 h-5 text-primary" />

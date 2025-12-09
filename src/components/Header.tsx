@@ -1,13 +1,12 @@
 import { motion } from "framer-motion";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Calculator } from "lucide-react";
 import { useState } from "react";
-import Logo from "./Logo";
 import { Button } from "./ui/button";
 
 const navLinks = [
   { href: "#como-funciona", label: "Como Funciona" },
   { href: "#calculadora", label: "Calculadora" },
-  { href: "#consultoria", label: "Consultoria" },
+  { href: "#dicas", label: "Dicas" },
   { href: "#sobre", label: "Sobre" },
 ];
 
@@ -27,11 +26,20 @@ const Header = () => {
       initial={{ y: -100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
-      className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border/50"
+      className="fixed top-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-lg border-b border-border/50 shadow-sm"
     >
       <div className="container mx-auto px-4 md:px-6">
         <div className="flex items-center justify-between h-16 md:h-20">
-          <Logo />
+          {/* Logo */}
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 rounded-xl bg-gold-gradient flex items-center justify-center shadow-gold">
+              <Calculator className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <span className="font-display text-xl font-bold text-foreground">Verifica</span>
+              <span className="font-display text-xl font-bold text-gold-gradient">Juros</span>
+            </div>
+          </div>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-8">
@@ -54,7 +62,7 @@ const Header = () => {
               size="sm"
               onClick={() => scrollToSection("#calculadora")}
             >
-              Calcular Juros
+              Calcular Agora
             </Button>
           </div>
 
@@ -94,7 +102,7 @@ const Header = () => {
               onClick={() => scrollToSection("#calculadora")}
               className="mt-2"
             >
-              Calcular Juros
+              Calcular Agora
             </Button>
           </nav>
         </motion.div>
