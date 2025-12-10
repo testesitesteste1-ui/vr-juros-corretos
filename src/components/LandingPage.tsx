@@ -26,11 +26,16 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const scrollToSection = (href: string) => {
-    const element = document.querySelector(href);
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
-    }
     setIsMenuOpen(false);
+    setTimeout(() => {
+      const element = document.querySelector(href);
+      if (element) {
+        const headerOffset = 80;
+        const elementPosition = element.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+        window.scrollTo({ top: offsetPosition, behavior: "smooth" });
+      }
+    }, 100);
   };
 
   return (
@@ -188,7 +193,13 @@ const TipsCarousel = () => {
 // ============================================
 const Hero = () => {
   const scrollToCalculator = () => {
-    document.querySelector("#calculadora")?.scrollIntoView({ behavior: "smooth" });
+    const element = document.querySelector("#calculadora");
+    if (element) {
+      const headerOffset = 80;
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+      window.scrollTo({ top: offsetPosition, behavior: "smooth" });
+    }
   };
 
   return (
@@ -251,7 +262,13 @@ const Hero = () => {
               <Button
                 variant="outline"
                 size="xl"
-                onClick={() => document.querySelector("#como-funciona")?.scrollIntoView({ behavior: "smooth" })}
+                onClick={() => {
+                  const el = document.querySelector("#como-funciona");
+                  if (el) {
+                    const offset = el.getBoundingClientRect().top + window.pageYOffset - 80;
+                    window.scrollTo({ top: offset, behavior: "smooth" });
+                  }
+                }}
                 className="w-full sm:w-auto border-accent/30 text-accent hover:bg-accent/5"
               >
                 Como Funciona
@@ -599,11 +616,11 @@ const InterestCalculator = () => {
                 </div>
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <Button variant="hero" size="lg" className="flex-1" onClick={calcular} disabled={isCalculating}>
                   {isCalculating ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Calculando...</> : <><Calculator className="w-4 h-4 mr-2" />Descobrir Taxa</>}
                 </Button>
-                <Button variant="outline" size="lg" onClick={limpar} disabled={isCalculating}>Limpar</Button>
+                <Button variant="outline" size="lg" className="w-full sm:w-auto" onClick={limpar} disabled={isCalculating}>Limpar</Button>
               </div>
 
               <AnimatePresence>
