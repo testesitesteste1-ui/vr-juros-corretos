@@ -115,11 +115,12 @@ const Header = () => {
 // TIPS CAROUSEL
 // ============================================
 const carouselTips = [
-  { emoji: "💡", text: "Você sabia? Juros acima de 8% ao mês podem ser abusivos!" },
-  { emoji: "⚠️", text: "Cuidado com empréstimos consignados com taxas altas!" },
-  { emoji: "✅", text: "Compare sempre a taxa antes de contratar!" },
-  { emoji: "📊", text: "Aposentados têm direito a taxas mais baixas!" },
-  { emoji: "🔍", text: "Descubra se você está pagando muito!" },
+  { emoji: "💡", text: "Juros acima de 8% ao mês podem ser abusivos! Descubra sua taxa." },
+  { emoji: "💳", text: "Cartão consignado (RMC/RCC) pode ter juros altíssimos! Fique atento." },
+  { emoji: "🚫", text: "Empréstimo não contratado? Você pode ter direito a reembolso!" },
+  { emoji: "⚠️", text: "Super endividado? O primeiro passo é entender suas taxas." },
+  { emoji: "📊", text: "Aposentados e pensionistas: você tem direito a taxas especiais!" },
+  { emoji: "🔍", text: "Descubra agora se você está pagando juros demais!" },
 ];
 
 const TipsCarousel = () => {
